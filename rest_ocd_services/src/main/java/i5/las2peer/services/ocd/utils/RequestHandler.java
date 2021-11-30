@@ -1,5 +1,7 @@
 package i5.las2peer.services.ocd.utils;
 
+import i5.las2peer.logging.L2pLogger;
+import i5.las2peer.services.ocd.ServiceClass;
 import i5.las2peer.services.ocd.adapters.AdapterException;
 import i5.las2peer.services.ocd.adapters.centralityInput.CentralityInputAdapter;
 import i5.las2peer.services.ocd.adapters.centralityInput.CentralityInputAdapterFactory;
@@ -27,7 +29,6 @@ import i5.las2peer.services.ocd.graphs.Cover;
 import i5.las2peer.services.ocd.graphs.CoverCreationType;
 import i5.las2peer.services.ocd.graphs.CustomGraph;
 import i5.las2peer.services.ocd.graphs.GraphCreationType;
-import i5.las2peer.services.ocd.graphs.GraphType;
 import i5.las2peer.services.ocd.metrics.OcdMetricLog;
 import i5.las2peer.services.ocd.metrics.OcdMetricType;
 
@@ -43,7 +44,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.logging.Level;
-import java.util.logging.Logger;
 
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
@@ -79,7 +79,7 @@ public class RequestHandler {
 	/**
 	 * The logger used for request logging.
 	 */
-	private static final Logger log = Logger.getLogger("Service API");
+	private final L2pLogger requestLogger = L2pLogger.getInstance(ServiceClass.RootResource.class);
 
 	/**
 	 * The factory used for creating cover output adapters.
@@ -122,7 +122,7 @@ public class RequestHandler {
 	 *            The exception.
 	 */
 	public synchronized void log(Level level, String message, Exception e) {
-		log.log(level, message, e);
+		requestLogger.log(level, "RequestHandler: " + message, e);
 	}
 
 	/**
@@ -134,7 +134,7 @@ public class RequestHandler {
 	 *            The entry message.
 	 */
 	public synchronized void log(Level level, String message) {
-		log.log(level, message);
+		requestLogger.log(level, "RequestHandler: " + message);
 	}
 
 	/**

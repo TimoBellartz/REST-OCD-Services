@@ -1,10 +1,6 @@
 package i5.las2peer.services.ocd;
 
-import java.io.BufferedReader;
-import java.io.BufferedWriter;
-import java.io.File;
-import java.io.FileReader;
-import java.io.FileWriter;
+import java.io.*;
 import java.net.HttpURLConnection;
 import java.net.URLDecoder;
 import java.util.ArrayList;
@@ -34,6 +30,9 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
 
+import i5.las2peer.persistency.helper.LatestArtifactVersionFinder;
+import i5.las2peer.services.ocd.utils.*;
+import i5.las2peer.services.ocd.utils.Error;
 import org.apache.commons.lang3.NotImplementedException;
 import org.apache.commons.math3.linear.RealMatrix;
 import org.la4j.matrix.sparse.CCSMatrix;
@@ -105,10 +104,6 @@ import i5.las2peer.services.ocd.metrics.OcdMetricLog;
 import i5.las2peer.services.ocd.metrics.OcdMetricLogId;
 import i5.las2peer.services.ocd.metrics.OcdMetricType;
 import i5.las2peer.services.ocd.metrics.StatisticalMeasure;
-import i5.las2peer.services.ocd.utils.Error;
-import i5.las2peer.services.ocd.utils.ExecutionStatus;
-import i5.las2peer.services.ocd.utils.InvocationHandler;
-import i5.las2peer.services.ocd.utils.ThreadHandler;
 import i5.las2peer.services.ocd.viewer.LayoutHandler;
 import i5.las2peer.services.ocd.viewer.ViewerRequestHandler;
 import i5.las2peer.services.ocd.viewer.layouters.GraphLayoutType;
@@ -161,10 +156,6 @@ public class ServiceClass extends RESTService {
 	///////////////////////////////////////////////////////////
 
 	/**
-	 * l2p logger
-	 */
-	private final static L2pLogger logger = L2pLogger.getInstance(ServiceClass.class.getName());
-	/**
 	 * The thread handler used for algorithm, benchmark and metric execution.
 	 */
 	private final static ThreadHandler threadHandler = new ThreadHandler();
@@ -193,7 +184,7 @@ public class ServiceClass extends RESTService {
 	 * The factory used for creating centrality simulations.
 	 */
 	private final static CentralitySimulationFactory centralitySimulationFactory = new CentralitySimulationFactory();
-	
+
 	/**
 	 * The factory used for creating centrality algorithms.
 	 */
@@ -238,15 +229,38 @@ public class ServiceClass extends RESTService {
 	)
 	public static class RootResource {
 
+		/**
+		 * ocd logger
+		 */
+		private final static L2pLogger ocdLogger = initServiceLogger();
+
+		/**
+		 * set Logfile for Logger
+		 */
+		private static L2pLogger initServiceLogger() {
+			L2pLogger newLogger = L2pLogger.getInstance(RootResource.class);
+			try {
+				newLogger.setLevel(Level.FINEST);
+				newLogger.setLogfileLevel(Level.FINEST);
+				newLogger.setLogDirectory("log/");
+				newLogger.setLogfilePrefix("ocdService.log");
+			}
+			catch (IOException err)
+			{
+				newLogger.log(Level.SEVERE, "Could not set logfile for serviceLogger");
+			}
+			return newLogger;
+		}
+
 		// get access to the service class
 		private final ServiceClass service = (ServiceClass) Context.getCurrent().getService();
-		
+
 		/**
 		 * Simple function to validate a user login. Basically it only serves as
 		 * a "calling point" and does not really validate a user (since this is
 		 * done previously by LAS2peer itself, the user does not reach this
 		 * method if he or she is not authenticated).
-		 * 
+		 *
 		 * @return A confirmation XML.
 		 */
 		@GET
@@ -270,7 +284,7 @@ public class ServiceClass extends RESTService {
 
 		/**
 		 * Imports a graph.
-		 * 
+		 *
 		 * @param nameStr
 		 *            The name for the graph.
 		 * @param creationTypeStr
@@ -414,7 +428,7 @@ public class ServiceClass extends RESTService {
 
 		/**
 		 * Stores big graphs step by step.
-		 * 
+		 *
 		 * @param nameStr
 		 *            The name for the graph.
 		 * @param contentStr
@@ -453,7 +467,7 @@ public class ServiceClass extends RESTService {
 
 		/**
 		 * Process the stored graph which was stored by storeGraph api.
-		 * 
+		 *
 		 * @param nameStr
 		 *            The name for the stored graph.
 		 * @param creationTypeStr
@@ -522,7 +536,7 @@ public class ServiceClass extends RESTService {
 
 		/**
 		 * Returns the ids (or meta information) of multiple graphs.
-		 * 
+		 *
 		 * @param firstIndexStr
 		 *            Optional query parameter. The result list index of the
 		 *            first id to return. Defaults to 0.
@@ -615,7 +629,7 @@ public class ServiceClass extends RESTService {
 
 		/**
 		 * Returns a graph in a specified output format.
-		 * 
+		 *
 		 * @param graphIdStr
 		 *            The graph id.
 		 * @param graphOutputFormatStr
@@ -667,7 +681,7 @@ public class ServiceClass extends RESTService {
 		 * terminated. If an algorithm is currently calculating a cover based on
 		 * the graph it is terminated. If a metric is currently running on a
 		 * cover based on the grap it is terminated.
-		 * 
+		 *
 		 * @param graphIdStr
 		 *            The graph id.
 		 * @return A confirmation xml. Or an error xml.
@@ -712,7 +726,7 @@ public class ServiceClass extends RESTService {
 
 		/**
 		 * Imports a cover for an existing graph.
-		 * 
+		 *
 		 * @param graphIdStr
 		 *            The id of the graph that the cover is based on.
 		 * @param nameStr
@@ -809,10 +823,10 @@ public class ServiceClass extends RESTService {
 				return requestHandler.writeError(Error.INTERNAL, "Internal system error.");
 			}
 		}
-		
+
 		/**
 		 * Returns the ids (or meta information) of multiple covers.
-		 * 
+		 *
 		 * @param firstIndexStr
 		 *            Optional query parameter. The result list index of the
 		 *            first id to return. Defaults to 0.
@@ -841,9 +855,9 @@ public class ServiceClass extends RESTService {
 		@GET
 		@Path("covers")
 		@Produces(MediaType.TEXT_XML)
-		@ApiResponses(value = { 
+		@ApiResponses(value = {
 				@ApiResponse(code = 200, message = "Success"),
-				@ApiResponse(code = 401, message = "Unauthorized") 
+				@ApiResponse(code = 401, message = "Unauthorized")
 		})
 		@ApiOperation(value = "Get Covers Info",
 			notes = "Returns the ids (or meta information) of multiple covers.")
@@ -853,7 +867,7 @@ public class ServiceClass extends RESTService {
 				@DefaultValue("FALSE") @QueryParam("includeMeta") String includeMetaStr,
 				@DefaultValue("") @QueryParam("executionStatuses") String executionStatusesStr,
 				@DefaultValue("") @QueryParam("metricExecutionStatuses") String metricExecutionStatusesStr,
-				@DefaultValue("") @QueryParam("graphId") String graphIdStr) 
+				@DefaultValue("") @QueryParam("graphId") String graphIdStr)
 		{
 			try {
 				String username = ((UserAgent) Context.getCurrent().getMainAgent()).getLoginName();
@@ -965,10 +979,10 @@ public class ServiceClass extends RESTService {
 				return requestHandler.writeError(Error.INTERNAL, "Internal system error.");
 			}
 		}
-		
+
 		/**
 		 * Returns a cover in a specified format.
-		 * 
+		 *
 		 * @param graphIdStr
 		 *            The id of the graph that the cover is based on.
 		 * @param coverIdStr
@@ -1013,13 +1027,13 @@ public class ServiceClass extends RESTService {
 				Cover cover = null;
 				try {
 					cover = entityHandler.getCover(username, graphId, coverId);
-					
+
 					// Paint cover if not yet done when requested type is default XML
-					if(format == CoverOutputFormat.DEFAULT_XML && !cover.isPainted()) { 
+					if(format == CoverOutputFormat.DEFAULT_XML && !cover.isPainted()) {
 						CoverPainter painter = (new CoverPainterFactory()).getInstance(CoverPaintingType.PREDEFINED_COLORS);
-						painter.doPaint(cover);					
+						painter.doPaint(cover);
 		    		}
-					
+
 				} catch (Exception e) {
 
 					requestHandler.log(Level.WARNING, "user: " + username + ", " + "Cover does not exist: cover id "
@@ -1033,14 +1047,14 @@ public class ServiceClass extends RESTService {
 				return requestHandler.writeError(Error.INTERNAL, "Internal system error.");
 			}
 		}
-		
+
 		/**
 		 * Deletes a cover. If the cover is still being created by an algorithm,
 		 * the algorithm is terminated. If the cover is still being created by a
 		 * ground truth benchmark, the benchmark is terminated and the
 		 * corresponding graph is deleted as well. If metrics are running on the
 		 * cover, they are terminated.
-		 * 
+		 *
 		 * @param coverIdStr
 		 *            The cover id.
 		 * @param graphIdStr
@@ -1086,14 +1100,14 @@ public class ServiceClass extends RESTService {
 				return requestHandler.writeError(Error.INTERNAL, "Internal system error.");
 			}
 		}
-		
+
 		//////////////////////////////////////////////////////////////////////////
 		//////////// ALGORITHMS
 		//////////////////////////////////////////////////////////////////////////
 
 		/**
 		 * Creates a new cover by running an algorithm on an existing graph.
-		 * 
+		 *
 		 * @param graphIdStr
 		 *            The id of the graph to run the algorithm on, must have the
 		 *            creation method status completed.
@@ -4006,7 +4020,7 @@ public class ServiceClass extends RESTService {
 				}
 	
 			} catch (Exception e) {
-				logger.log(Level.WARNING, "user: " + username, e);
+				requestHandler.log(Level.SEVERE, "user: " + username, e);
 				e.printStackTrace();
 				return Response.status(Status.INTERNAL_SERVER_ERROR).entity("internal error").build();
 			}
@@ -4042,7 +4056,7 @@ public class ServiceClass extends RESTService {
 				series.evaluate();
 	
 			} catch (Exception e) {
-				logger.log(Level.WARNING, "user: " + username, e);
+				requestHandler.log(Level.SEVERE, "user: " + username, e);
 				e.printStackTrace();
 				return Response.status(Status.INTERNAL_SERVER_ERROR).entity("internal error").build();
 			}
@@ -4076,7 +4090,7 @@ public class ServiceClass extends RESTService {
 			try {
 				parameters = entityHandler.getSimulationParameters(seriesId);
 			} catch (Exception e) {
-				logger.log(Level.WARNING, "fail to get simulation series parameters");
+				requestHandler.log(Level.SEVERE, "fail to get simulation series parameters");
 				return Response.status(Status.INTERNAL_SERVER_ERROR).entity("fail to get simulation series parameters")
 						.build();
 			}
@@ -4158,7 +4172,7 @@ public class ServiceClass extends RESTService {
 				series = simulationBuilder.simulate();
 	
 			} catch (Exception e) {
-				logger.log(Level.WARNING, "user: " + username, e);
+				requestHandler.log(Level.SEVERE, "user: " + username, e);
 				e.printStackTrace();
 				return Response.serverError().entity("simulation could not be carried out\n" + e.getMessage()).build();
 			}
@@ -4196,7 +4210,7 @@ public class ServiceClass extends RESTService {
 					series.add(entityHandler.getSimulationSeries(id));				
 				}
 			} catch (Exception e) {
-				logger.log(Level.WARNING, "user: " + getUserName(), e);
+				requestHandler.log(Level.SEVERE, "user: " + getUserName(), e);
 				e.printStackTrace();
 				return Response.serverError().entity("Invalid simulation series \n" + e.getMessage()).build();
 			}
@@ -4284,7 +4298,7 @@ public class ServiceClass extends RESTService {
 				series.evaluate();
 	
 			} catch (Exception e) {
-				logger.log(Level.WARNING, "user: " + username, e);
+				requestHandler.log(Level.SEVERE, "user: " + username, e);
 				e.printStackTrace();
 				return Response.status(Status.INTERNAL_SERVER_ERROR).entity("internal error").build();
 			}
@@ -4388,7 +4402,7 @@ public class ServiceClass extends RESTService {
 
 				
 			} catch (Exception e) {
-				logger.log(Level.WARNING, "user: " + username, e);
+				requestHandler.log(Level.SEVERE, "user: " + username, e);
 				e.printStackTrace();
 				return Response.status(Status.INTERNAL_SERVER_ERROR).entity("internal error").build();
 			}
@@ -4443,7 +4457,7 @@ public class ServiceClass extends RESTService {
 				}
 
 			} catch (Exception e) {
-				logger.log(Level.WARNING, "user: " + username, e);
+				requestHandler.log(Level.SEVERE, "user: " + username, e);
 				e.printStackTrace();
 				return Response.status(Status.INTERNAL_SERVER_ERROR).entity("internal error").build();
 			}
@@ -4552,7 +4566,7 @@ public class ServiceClass extends RESTService {
 		graphData.put("name", name);
 		graphData.put("graph", adjList);
 
-		logger.log(Level.INFO, "RMI requested a graph: " + graphId);
+		requestHandler.log(Level.INFO, "RMI requested a graph: " + graphId);
 		return graphData;
 	}
 
@@ -4572,7 +4586,7 @@ public class ServiceClass extends RESTService {
 			graphIdList.add(graphList.get(i).getId());
 		}
 
-		logger.log(Level.INFO, "RMI requested graph Ids");
+		requestHandler.log(Level.INFO, "RMI requested graph Ids");
 		return graphIdList;
 	}
 
