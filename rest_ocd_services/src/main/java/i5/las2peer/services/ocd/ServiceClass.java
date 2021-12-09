@@ -1242,6 +1242,10 @@ public class ServiceClass extends RESTService {
 						throw e;
 					}
 					em.close();
+
+					Context.get().monitorEvent(MonitoringEvent.SERVICE_CUSTOM_MESSAGE_1, "{" + "\"user\":\"" + username + "\"," +
+							"\"algo_kind\":\"Ocd\"," +
+							"\"algo_type\":\"" + creationTypeStr + "\"}");
 					/*
 					 * Registers and starts algorithm
 					 */
@@ -1249,6 +1253,9 @@ public class ServiceClass extends RESTService {
 				}
 				return Response.ok(requestHandler.writeId(cover)).build();
 			} catch (Exception e) {
+				Context.get().monitorEvent(MonitoringEvent.SERVICE_CUSTOM_MESSAGE_10, "{" + "\"user\":\"" + ((UserAgent) Context.getCurrent().getMainAgent()).getLoginName() + "\"," +
+						"\"algo_kind\":\"Ocd\"," +
+						"\"algo_type\":\"" + creationTypeStr + "\"}");
 				requestHandler.log(Level.SEVERE, "", e);
 				return requestHandler.writeError(Error.INTERNAL, "Internal system error.");
 			}
@@ -1587,6 +1594,10 @@ public class ServiceClass extends RESTService {
 					}
 					em.close();
 
+					Context.get().monitorEvent(MonitoringEvent.SERVICE_CUSTOM_MESSAGE_1, "{" + "\"user\":\"" + username + "\"," +
+							"\"algo_kind\":\"Centrality\"," +
+							"\"algo_type\":\"" + centralityMeasureTypeStr + "\"}");
+
 			    	/*
 			    	 * Registers and starts algorithm
 			    	 */	
@@ -1900,7 +1911,11 @@ public class ServiceClass extends RESTService {
 						throw e;
 					}
 					em.close();
-			    	/*
+
+					Context.get().monitorEvent(MonitoringEvent.SERVICE_CUSTOM_MESSAGE_1, "{" + "\"user\":\"" + username + "\"," +
+							"\"algo_kind\":\"CentralitySim\"," +
+							"\"algo_type\":\"" + simulationTypeStr + "\"}");
+					/*
 			    	 * Registers and starts algorithm
 			    	 */	
 					threadHandler.runCentralitySimulation(map, simulation);
@@ -2338,6 +2353,10 @@ public class ServiceClass extends RESTService {
 	    				throw e;
 	    			}
 	    			em.close();
+
+					Context.get().monitorEvent(MonitoringEvent.SERVICE_CUSTOM_MESSAGE_1, "{" + "\"user\":\"" + username + "\"," +
+							"\"algo_kind\":\"Benchmark\"," +
+							"\"algo_type\":\"" + creationTypeStr + "\"}");
 	    			/*
 	    			 * Registers and starts benchmark creation.
 	    			 */
@@ -2498,6 +2517,10 @@ public class ServiceClass extends RESTService {
 	    				}
 	    				throw e;
 	    			}
+
+					Context.get().monitorEvent(MonitoringEvent.SERVICE_CUSTOM_MESSAGE_1, "{" + "\"user\":\"" + username + "\"," +
+							"\"algo_kind\":\"MetricStatistical\"," +
+							"\"algo_type\":\"" + metricTypeStr + "\"}");
 	    			threadHandler.runStatisticalMeasure(log, metric, cover);
 	    		}
 	
@@ -2655,6 +2678,10 @@ public class ServiceClass extends RESTService {
 	    				}
 	    				throw e;
 	    			}
+
+					Context.get().monitorEvent(MonitoringEvent.SERVICE_CUSTOM_MESSAGE_1, "{" + "\"user\":\"" + username + "\"," +
+							"\"algo_kind\":\"MetricKnowledge\"," +
+							"\"algo_type\":\"" + metricTypeStr + "\"}");
 	    			threadHandler.runKnowledgeDrivenMeasure(log, metric, cover, groundTruth);
 	    		}
 	    		return Response.ok(requestHandler.writeId(log)).build();
@@ -4169,9 +4196,17 @@ public class ServiceClass extends RESTService {
 				SimulationBuilder simulationBuilder = new SimulationBuilder();
 				simulationBuilder.setParameters(parameters);
 				simulationBuilder.setNetwork(network);
+
+				Context.get().monitorEvent(MonitoringEvent.SERVICE_CUSTOM_MESSAGE_1, "{" + "\"user\":\"" + username + "\"," +
+						"\"algo_kind\":\"Simulation\"," +
+						"\"algo_type\":\"" + parameters.getGame().name() + "\"}");
 				series = simulationBuilder.simulate();
 	
 			} catch (Exception e) {
+
+				Context.get().monitorEvent(MonitoringEvent.SERVICE_CUSTOM_MESSAGE_10, "{" + "\"user\":\"" + username + "\"," +
+						"\"algo_kind\":\"Simulation\"," +
+						"\"algo_type\":\"" + parameters.getGame().name() + "\"}");
 				requestHandler.log(Level.SEVERE, "user: " + username, e);
 				e.printStackTrace();
 				return Response.serverError().entity("simulation could not be carried out\n" + e.getMessage()).build();
@@ -4200,7 +4235,7 @@ public class ServiceClass extends RESTService {
 		@Consumes(MediaType.APPLICATION_JSON)
 		@ApiResponses(value = { @ApiResponse(code = HttpURLConnection.HTTP_OK, message = "OK"),
 				@ApiResponse(code = HttpURLConnection.HTTP_UNAUTHORIZED, message = "Unauthorized") })
-		@ApiOperation(value = "Run simulation group", notes = " Starts a simulation group of evolutionary cooperation or defection games ")
+		@ApiOperation(value = "Group Simulations", notes = " Creates a group of run evolutionary cooperation or defection games ")
 		public Response putSimulationGroup(@DefaultValue("") @QueryParam("name") String name,
 				List<Integer> seriesIds) {
 	
