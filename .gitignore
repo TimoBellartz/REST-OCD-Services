@@ -27,6 +27,7 @@ restMapping.xml
 /.settings/
 
 /yFiles/*.jar
+/yGuard
 
 # Ignore Gradle project-specific cache directory
 .gradle

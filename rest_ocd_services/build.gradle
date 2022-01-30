@@ -15,7 +15,7 @@ def export = "$projectDir/export"
 def ocd = "$rootDir/ocd"
 
 repositories {
-    // Use JCenter for resolving dependencies.
+    // Use Maven Central for resolving dependencies.
     mavenCentral()
 
     // DBIS Archiva
@@ -26,67 +26,69 @@ repositories {
 
 dependencies {
     //yGuard
-    compileOnly 'com.yworks:yguard:3.0.0'
+    implementation 'com.yworks:yguard:3.0.0'
 
     // Use JUnit test framework.
     testImplementation 'junit:junit:4.13'
 
     // las2peer bundle which is not necessary in the runtime path
-    // compileOnly will be moved into the lib dir afterwards
-    compileOnly "i5:las2peer-bundle:${project.property('core.version')}"
+    // implementation will be moved into the lib dir afterwards
+    implementation "i5:las2peer-bundle:${project.property('core.version')}"
 
     //ocd service deps
-    compileOnly "org.apache.commons:commons-exec:1.3"
-    compileOnly "com.google.guava:guava:31.0.1-jre"
-    compileOnly "org.la4j:la4j:0.4.9"
-    compileOnly "org.eclipse.persistence:eclipselink:2.7.9"
-    compileOnly "org.apache.geronimo.specs:geronimo-jpa_2.0_spec:1.1"
-    compileOnly("commons-jxpath:commons-jxpath:1.3") {
+    implementation "org.apache.commons:commons-exec:1.3"
+    implementation "com.google.guava:guava:31.0.1-jre"
+    implementation "org.la4j:la4j:0.4.9"
+    implementation "org.eclipse.persistence:eclipselink:2.7.9"
+    implementation "org.apache.geronimo.specs:geronimo-jpa_2.0_spec:1.1"
+    implementation("commons-jxpath:commons-jxpath:1.3") {
         exclude group: 'xml-apis', module: 'xml-apis'
         exclude group: 'xerces', module: 'xerces'
     }
-    compileOnly "commons-logging:commons-logging:1.2"
-    compileOnly "org.bouncycastle:bcprov-jdk15on:1.70"
+    implementation "commons-logging:commons-logging:1.2"
+    implementation "org.bouncycastle:bcprov-jdk15on:1.70"
 
-    compileOnly "net.minidev:json-smart:2.4.7"
-    compileOnly "com.googlecode.json-simple:json-simple:1.1.1"
-    compileOnly "org.apache.commons:commons-pool2:2.11.1"
-    compileOnly "org.apache.commons:commons-dbcp2:2.9.0"
-    compileOnly "org.apache.commons:commons-math3:3.6.1"
-    compileOnly "org.apache.geronimo.specs:geronimo-jpa_2.0_spec:1.1"
-    compileOnly "org.apache.lucene:lucene-core:8.9.1"
-    compileOnly "org.apache.lucene:lucene-analyzers-common:8.11.1"
-    compileOnly "org.apache.poi:poi:5.1.0"
-    compileOnly "org.apache.poi:poi-ooxml:5.1.0"
+    implementation "net.minidev:json-smart:2.4.7"
+    implementation "com.googlecode.json-simple:json-simple:1.1.1"
+    implementation "org.apache.commons:commons-pool2:2.11.1"
+    implementation "org.apache.commons:commons-dbcp2:2.9.0"
+    implementation "org.apache.commons:commons-math3:3.6.1"
+    implementation "org.apache.geronimo.specs:geronimo-jpa_2.0_spec:1.1"
+    implementation "org.apache.lucene:lucene-core:8.9.1"
+    implementation "org.apache.lucene:lucene-analyzers-common:8.11.1"
+    implementation "org.apache.poi:poi:5.1.0"
+    implementation "org.apache.poi:poi-ooxml:5.1.0"
 
-    compileOnly "org.apache.jena:jena-core:4.3.2"
+    implementation "org.apache.jena:jena-core:4.3.2"
     //Exclude jackson modules as they are already included by las2peer and newer versions may break things like swagger
-    compileOnly ("org.apache.jena:jena-arq:4.3.2") {
+    implementation ("org.apache.jena:jena-arq:4.3.2") {
         exclude group: "com.fasterxml.jackson.core", module: "jackson-core"
         exclude group: "com.fasterxml.jackson.core", module: "jackson-databind"
     }
 
-    compileOnly "org.ejml:ejml-core:0.41"
-    compileOnly "org.hsqldb:hsqldb:2.6.1"
-    compileOnly "org.apache.xmlgraphics:batik-svggen:1.14"
-    compileOnly("org.apache.xmlgraphics:batik-bridge:1.14") {
+    implementation "org.ejml:ejml-core:0.41"
+    implementation "org.hsqldb:hsqldb:2.6.1"
+    implementation "org.apache.xmlgraphics:batik-svggen:1.14"
+    implementation("org.apache.xmlgraphics:batik-bridge:1.14") {
         exclude group: 'xml-apis', module: 'xml-apis'
     }
-    compileOnly "org.mockito:mockito-all:1.9.5"
-    compileOnly "fr.irit.smac.thirdparty.edu.gmu.cs:mason:19"
-    compileOnly "org.ojalgo:ojalgo:50.0.0"
-    compileOnly "net.sbbi:sbbi-upnplib:1.0.4"
+    implementation "org.mockito:mockito-all:1.9.5"
+    implementation "fr.irit.smac.thirdparty.edu.gmu.cs:mason:19"
+    implementation "org.ojalgo:ojalgo:50.0.0"
+    implementation "net.sbbi:sbbi-upnplib:1.0.4"
 
     //yFiles
-    compileOnly fileTree(dir: "${yFiles}", include: '*.jar')
+    implementation fileTree(dir: "${yFiles}", include: '*.jar')
 }
 
 configurations {
     // This ensures las2peer is available in the tests, but won't be bundled
-    testCompile.extendsFrom compileOnly
+    testCompile.extendsFrom implementation
 }
 
 jar {
+    zip64 = true
+    duplicatesStrategy = DuplicatesStrategy.INCLUDE
     manifest {
         attributes "Main-Class": "${project.property('service.name')}.${project.property('service.class')}"
         attributes "Library-Version": "${project.property('service.version')}"
@@ -95,22 +97,22 @@ jar {
 
     from { (configurations.runtimeClasspath).collect { it.isDirectory() ? it : zipTree(it) } } {
         // Exclude signatures to be able to natively bundle signed jars
-        exclude 'META-INF/*.RSA', 'META-INF/*.SF', 'META-INF/*.DSA'
+        exclude 'META-INF/*.RSA', 'META-INF/*.SF', 'META-INF/*.DSA'//, 'META-INF/LICENSE*', 'META-INF/NOTICE*', 'META-INF/maven/**/pom*'
     }
 }
 
 application {
     // Define the main class for the application.
-    mainClass = 'REST.OCD.Services.App'
+    mainClass.set('REST.OCD.Services.App')
 }
 
 // put all .jar files into export/jars folder
 tasks.withType(Jar) {
-    destinationDir = file("$projectDir/export/jars")
+    destinationDirectory  = file("$projectDir/export/jars")
 }
 
 javadoc {
-    destinationDir = file("$projectDir/export/doc")
+    destinationDir  = file("$projectDir/export/doc")
 }
 
 build.dependsOn "javadoc"
@@ -144,20 +146,21 @@ task copyJar(type: Copy) {
     into "$rootDir/service"
 }
 
-task copyToLib(type: Copy) {
+task copyYGuardToFolder(type: Copy) {
     from configurations.compileClasspath
-    into "$rootDir/lib"
+    include "**/yguard*.jar"
+    into "$rootDir/yGuard"
 }
 
 build.dependsOn copyJar
-build.dependsOn copyToLib
+build.dependsOn copyYGuardToFolder
 
 task startscripts {
     new File("$rootDir/bin", "start_network.sh").text = """#!/bin/bash
 # this script is autogenerated by 'gradle startscripts'
 # it starts a las2peer node providing the service '${project.property('service.name')}.${project.property('service.class')}' of this project
 # pls execute it from the root folder of your deployment, e. g. ./bin/start_network.sh
-java -cp "lib/*" i5.las2peer.tools.L2pNodeLauncher --port 9011 --service-directory service uploadStartupDirectory startService\\(\\'${project.property('service.name')}.${project.property('service.class')}@${project.property('service.version')}\\'\\) startWebConnector interactive
+java -cp "service/*" --add-opens java.base/java.lang=ALL-UNNAMED --add-opens java.base/java.util=ALL-UNNAMED i5.las2peer.tools.L2pNodeLauncher --port 9011 --service-directory service uploadStartupDirectory startService\\(\\'${project.property('service.name')}.${project.property('service.class')}@${project.property('service.version')}\\'\\) startWebConnector interactive
 """
     new File("$rootDir/bin", "start_network.bat").text = """:: this script is autogenerated by 'gradle startscripts'
 :: it starts a las2peer node providing the service '${project.property('service.name')}.${project.property('service.class')}' of this project
@@ -166,8 +169,11 @@ java -cp "lib/*" i5.las2peer.tools.L2pNodeLauncher --port 9011 --service-directo
 cd %~p0
 cd ..
 set BASE=%CD%
-set CLASSPATH="%BASE%/lib/*;%BASE%/service/*;"
-java -cp %CLASSPATH% i5.las2peer.tools.L2pNodeLauncher --port 9011 --service-directory service uploadStartupDirectory startService('${project.property('service.name')}.${project.property('service.class')}@${project.property('service.version')}') startWebConnector interactive
+set CLASSPATH="%BASE%/service/*"
+set ADD_OPENS=--add-opens java.base/java.lang=ALL-UNNAMED --add-opens java.base/java.util=ALL-UNNAMED
+
+java -cp %CLASSPATH% %ADD_OPENS% i5.las2peer.tools.L2pNodeLauncher --port 9011 --service-directory service uploadStartupDirectory startService('${project.property('service.name')}.${project.property('service.class')}@${project.property('service.version')}') startWebConnector interactive
+
 pause
 """
 }
@@ -256,8 +262,8 @@ clean.doLast {
     file("$ocd/indexes").deleteDir()
     file("$ocd/yGuard").deleteDir()
 
+    file("$rootDir/yGuard").deleteDir()
     file("$rootDir/tmp").deleteDir()
-    file("$rootDir/lib").deleteDir()
     file("$rootDir/servicebundle").deleteDir()
     file("$rootDir/service").deleteDir()
     file("$rootDir/etc/startup").deleteDir()
@@ -278,6 +284,8 @@ test {
     workingDir = file("$rootDir")
 }
 
+test.dependsOn "copyJar"
+
 task yguard {
     group 'yGuard'
     description 'Obfuscates and shrinks the java archive.'
@@ -289,7 +297,7 @@ task yguard {
         ant.taskdef(
                 name: 'yguard',
                 classname: 'com.yworks.yguard.YGuardTask',
-                classpath: '../lib/yGuard-3.0.0.jar'
+                classpath: '../yGuard/yguard-3.0.0.jar'
         )
 
         ant.yguard {
@@ -302,7 +310,7 @@ task yguard {
             inoutpair(in: "${export}/jars/rest_ocd_services.jar", out: "${export}/obfuscated/rest_ocd_services.jar")
 
             externalclasses {
-                //pathelement(location: configurations.compileOnly.asPath)
+                //pathelement(location: configurations.implementation.asPath)
                 fileset(dir: "${rootDir}/lib") {
                     include(name: '**/*.jar')
                 }
