@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!-- This file defines only the persistence unit used for jUnit testing.
+<!-- This file defines only the persistence unit used for additional jUnit testing for the Simulation Component.
 To configure the actual service use the persistence.xml in ocd/eclipselink -->
 <persistence version="1.0"
     xmlns="http://java.sun.com/xml/ns/persistence"
@@ -7,7 +7,7 @@ To configure the actual service use the persistence.xml in ocd/eclipselink -->
     xsi:schemaLocation="http://java.sun.com/xml/ns/persistence
                         http://java.sun.com/xml/ns/persistence/persistence_1_0.xsd">
     <persistence-unit name="ocd" transaction-type="RESOURCE_LOCAL">
-    	<provider>org.eclipse.persistence.jpa.PersistenceProvider</provider>    	
+    	<provider>org.eclipse.persistence.jpa.PersistenceProvider</provider>    
 		<exclude-unlisted-classes>false</exclude-unlisted-classes>
     	<properties>
 	      	<property name="javax.persistence.jdbc.driver"   value="org.hsqldb.jdbcDriver" />
